@@ -77,7 +77,7 @@ class DenseNet(nn.Module):
     ### 初始化函数
     ### num_init_features是第一次卷积结束后特征图的通道数
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16), 
-                num_init_features=64, bn_size=4, drop_rate=0, num_classes=4):
+                num_init_features=64, bn_size=4, drop_rate=0.0, num_classes=5):
         super(DenseNet, self).__init__()
         ## 初始化growth_rate
         self.growth_rate = growth_rate
@@ -115,14 +115,35 @@ class DenseNet(nn.Module):
                 out = self.trans_layers[i](out)
         ## 进行最后一次正则化
         out = self.norm_f(out)
-        ## 全局平均池化
-        out = F.adaptive_avg_pool2d(out, (1, 1))
-        ## 展平
-        out = torch.flatten(out, 1)
+        # ## 全局平均池化
+        # out = F.adaptive_avg_pool2d(out, (1, 1))
+        # ## 展平
+        # out = torch.flatten(out, 1)
+        out = F.relu(out, inplace=True)
+        out = F.avg_pool2d(out, kernel_size=7, stride=1).view(out.size(0), -1)
         ## 线性层
         out = self.classifier(out)
         ## 返回结果
         return out 
+
+def densenet121(**kwargs):
+    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16), **kwargs)
+    return model
+ 
+ 
+def densenet169(**kwargs):
+    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 32, 32), **kwargs)
+    return model
+ 
+ 
+def densenet201(**kwargs):
+    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 48, 32), **kwargs)
+    return model
+ 
+ 
+def densenet161(**kwargs):
+    model = DenseNet(num_init_features=96, growth_rate=48, block_config=(6, 12, 36, 24), **kwargs)
+    return model
 
 
 # #### 测试模型
@@ -130,7 +151,7 @@ class DenseNet(nn.Module):
 #     # 假设模型期望的输入图像大小是 32x32
 #     batch_size = 1
 #     channels = 3  # RGB图像
-#     height, width = 32, 32
+#     height, width = 244, 244
 #     input_data = torch.randn(batch_size, channels, height, width)
 
 #     # 测试模型
@@ -142,6 +163,6 @@ class DenseNet(nn.Module):
 #     input_data = input_data.to(device)
 #     output = net(input_data)
 
-#     print("Output size:", output)  # 打印输出张量
+#     print("Output size:", output.size())  # 打印输出张量
 
 
